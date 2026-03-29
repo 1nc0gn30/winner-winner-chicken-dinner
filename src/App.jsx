@@ -309,7 +309,6 @@ function App() {
   const [handResult, setHandResult] = useState('');
   const [coachEnabled, setCoachEnabled] = useState(true);
   const [coachMoment, setCoachMoment] = useState(null);
-  const [audioEnabled, setAudioEnabled] = useState(false);
   const [youtubeMusicOn, setYoutubeMusicOn] = useState(false);
   const [currentBet, setCurrentBet] = useState(BASE_BET);
   const [addFundsAmount, setAddFundsAmount] = useState(100);
@@ -333,8 +332,6 @@ function App() {
   const [quizComplete, setQuizComplete] = useState(false);
   const [wikiImages, setWikiImages] = useState({});
 
-  const audioCtxRef = useRef(null);
-  const ambienceTimerRef = useRef(null);
   const coachSeenRef = useRef(new Set());
 
   const playerMeta = useMemo(() => calculateHandMeta(playerHand), [playerHand]);
@@ -359,87 +356,9 @@ function App() {
   const tensInShoe = shoe.filter((card) => ['10', 'J', 'Q', 'K', 'A'].includes(card.value)).length;
   const tenProb = shoe.length > 0 ? ((tensInShoe / shoe.length) * 100).toFixed(1) : '0.0';
 
-  const getAudioContext = useCallback(() => {
-    if (!audioEnabled) return null;
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextClass) return null;
-
-    if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
-      audioCtxRef.current = new AudioContextClass();
-    }
-
-    if (audioCtxRef.current.state === 'suspended') {
-      audioCtxRef.current.resume();
-    }
-    return audioCtxRef.current;
-  }, [audioEnabled]);
-
-  const playTone = useCallback((frequency, duration = 0.1, type = 'triangle', volume = 0.03) => {
-    const ctx = getAudioContext();
-    if (!ctx) return;
-
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const now = ctx.currentTime;
-
-    osc.type = type;
-    osc.frequency.setValueAtTime(frequency, now);
-
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(volume, now + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + duration + 0.02);
-  }, [getAudioContext]);
-
-  const playSuccess = () => {
-    playTone(523.25, 0.09, 'sine', 0.035);
-    setTimeout(() => playTone(659.25, 0.1, 'sine', 0.035), 50);
-  };
-
-  const playError = () => {
-    playTone(207.65, 0.12, 'sawtooth', 0.03);
-    setTimeout(() => playTone(174.61, 0.12, 'sawtooth', 0.028), 60);
-  };
-
-  const stopAmbience = useCallback(() => {
-    if (ambienceTimerRef.current) {
-      clearInterval(ambienceTimerRef.current);
-      ambienceTimerRef.current = null;
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!audioEnabled) {
-      stopAmbience();
-      return undefined;
-    }
-
-    const pulse = () => {
-      playTone(130.81, 0.5, 'triangle', 0.012);
-      setTimeout(() => playTone(164.81, 0.45, 'triangle', 0.01), 120);
-      setTimeout(() => playTone(196, 0.4, 'triangle', 0.01), 220);
-    };
-
-    pulse();
-    ambienceTimerRef.current = setInterval(pulse, 2600);
-
-    return () => {
-      stopAmbience();
-    };
-  }, [audioEnabled, playTone, stopAmbience]);
-
-  useEffect(() => {
-    return () => {
-      stopAmbience();
-      if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
-        audioCtxRef.current.close();
-      }
-    };
-  }, [stopAmbience]);
+  const playTone = useCallback(() => {}, []);
+  const playSuccess = () => {};
+  const playError = () => {};
 
   useEffect(() => {
     let cancelled = false;
@@ -846,7 +765,6 @@ function App() {
               </IconButton>
               <IconButton
                 onClick={() => {
-                  setAudioEnabled((prev) => !prev);
                   setYoutubeMusicOn((prev) => !prev);
                 }}
                 sx={{
